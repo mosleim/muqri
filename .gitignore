@@ -30,6 +30,7 @@ frontend/build/
 frontend/.react-router/
 frontend/coverage/
 frontend/package-lock.json
+dist/
 
 # E2E
 e2e/node_modules/
