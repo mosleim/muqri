@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { loadFaceModel, detectFace, disposeFaceModel } from '@/services/faceService';
+import { loadFaceModel, detectFace } from '@/services/faceService';
 import { computeEARData, computeBaselineEAR } from '@/lib/blinkDetector';
 import { useAppStore } from '@/stores/appStore';
 import { usePrayerStore } from '@/stores/prayerStore';
@@ -26,24 +26,23 @@ export function useBlinkDetection(
   const { currentPose, isSendekap, nextAyah, triggerBlinkFeedback, mode } =
     usePrayerStore();
 
-  const init = useCallback(async () => {
-    try {
-      setFaceModelStatus('loading');
-      await loadFaceModel();
-      setFaceModelStatus('ready');
-    } catch {
-      setFaceModelStatus('error');
-    }
-  }, [setFaceModelStatus]);
-
   useEffect(() => {
     if (!enabled) return;
-    init();
+    let cancelled = false;
+    (async () => {
+      try {
+        setFaceModelStatus('loading');
+        await loadFaceModel();
+        if (!cancelled) setFaceModelStatus('ready');
+      } catch {
+        if (!cancelled) setFaceModelStatus('error');
+      }
+    })();
     return () => {
-      disposeFaceModel();
+      cancelled = true;
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [enabled, init]);
+  }, [enabled, setFaceModelStatus]);
 
   // Calibration
   const startCalibration = useCallback(() => {

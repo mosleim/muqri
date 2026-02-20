@@ -1,10 +1,11 @@
 import * as poseDetection from '@tensorflow-models/pose-detection';
-import '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs';
 
 let detector: poseDetection.PoseDetector | null = null;
 
 export async function loadPoseModel(): Promise<void> {
   if (detector) return;
+  await tf.ready();
   detector = await poseDetection.createDetector(
     poseDetection.SupportedModels.MoveNet,
     {

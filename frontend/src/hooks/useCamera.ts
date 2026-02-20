@@ -8,6 +8,12 @@ export function useCamera() {
 
   const start = useCallback(async () => {
     try {
+      // Stop any existing stream first
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
+      }
+      setError(null);
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: 640, height: 480 },
         audio: false,
@@ -19,6 +25,8 @@ export function useCamera() {
         setReady(true);
       }
     } catch (err) {
+      // Ignore AbortError from StrictMode double-mount
+      if ((err as DOMException).name === 'AbortError') return;
       setError((err as Error).message);
     }
   }, []);

@@ -1,5 +1,5 @@
-import { useEffect, useRef, useCallback } from 'react';
-import { loadPoseModel, detectPose, disposePoseModel } from '@/services/poseService';
+import { useEffect, useRef } from 'react';
+import { loadPoseModel, detectPose } from '@/services/poseService';
 import { classifyPose } from '@/lib/poseClassifier';
 import { detectSendekap } from '@/lib/handsDetector';
 import { useAppStore } from '@/stores/appStore';
@@ -15,24 +15,23 @@ export function usePoseDetection(videoRef: React.RefObject<HTMLVideoElement | nu
   const { setPoseModelStatus } = useAppStore();
   const { setCurrentPose, setIsSendekap } = usePrayerStore();
 
-  const init = useCallback(async () => {
-    try {
-      setPoseModelStatus('loading');
-      await loadPoseModel();
-      setPoseModelStatus('ready');
-    } catch {
-      setPoseModelStatus('error');
-    }
-  }, [setPoseModelStatus]);
-
   useEffect(() => {
     if (!enabled) return;
-    init();
+    let cancelled = false;
+    (async () => {
+      try {
+        setPoseModelStatus('loading');
+        await loadPoseModel();
+        if (!cancelled) setPoseModelStatus('ready');
+      } catch {
+        if (!cancelled) setPoseModelStatus('error');
+      }
+    })();
     return () => {
-      disposePoseModel();
+      cancelled = true;
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [enabled, init]);
+  }, [enabled, setPoseModelStatus]);
 
   useEffect(() => {
     if (!enabled) return;
