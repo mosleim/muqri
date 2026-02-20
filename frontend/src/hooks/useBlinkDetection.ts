@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { loadFaceModel, detectFace } from '@/services/faceService';
 import { computeEARData, computeBaselineEAR } from '@/lib/blinkDetector';
 import { useAppStore } from '@/stores/appStore';
@@ -20,6 +20,7 @@ export function useBlinkDetection(
   const lastAdvanceTime = useRef<number>(0);
   const calibrationSamples = useRef<number[]>([]);
   const calibrationStart = useRef<number>(0);
+  const [calibrating, setCalibrating] = useState(false);
 
   const { setFaceModelStatus, earBaseline, setEarBaseline, setCalibrated, calibrated } =
     useAppStore();
@@ -44,15 +45,17 @@ export function useBlinkDetection(
     };
   }, [enabled, setFaceModelStatus]);
 
-  // Calibration
+  // Start calibration on button click
   const startCalibration = useCallback(() => {
     calibrationSamples.current = [];
     calibrationStart.current = Date.now();
     setCalibrated(false);
+    setCalibrating(true);
   }, [setCalibrated]);
 
+  // Calibration loop — only runs when calibrating is true
   useEffect(() => {
-    if (!enabled || calibrated) return;
+    if (!enabled || !calibrating) return;
 
     const interval = 1000 / DETECTION_FPS;
     let lastTime = 0;
@@ -78,10 +81,11 @@ export function useBlinkDetection(
             calibrationSamples.current.length;
           setEarBaseline(avg);
           setCalibrated(true);
+          setCalibrating(false);
           cancelAnimationFrame(rafRef.current);
         }
       } catch {
-        // skip
+        // skip frame
       }
     };
 
@@ -89,7 +93,7 @@ export function useBlinkDetection(
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [enabled, calibrated, videoRef, setEarBaseline, setCalibrated]);
+  }, [enabled, calibrating, videoRef, setEarBaseline, setCalibrated]);
 
   // Blink detection loop (after calibration)
   useEffect(() => {
