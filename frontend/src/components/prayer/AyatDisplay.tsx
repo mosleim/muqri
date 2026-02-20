@@ -20,7 +20,7 @@ export function AyatDisplay({ ayahs, currentIndex, dimmed }: AyatDisplayProps) {
     >
       {/* Ayat sebelumnya */}
       {prev && (
-        <p className="font-arabic text-lg sm:text-xl text-neutral-600 text-center mb-6 leading-loose max-w-3xl">
+        <p className="font-arabic text-lg sm:text-xl text-neutral-600 text-center mb-6 leading-[2.2] max-w-3xl">
           {prev.text}
           <span className="text-xs text-neutral-700 mr-2"> ({prev.number})</span>
         </p>
@@ -28,7 +28,7 @@ export function AyatDisplay({ ayahs, currentIndex, dimmed }: AyatDisplayProps) {
 
       {/* Ayat saat ini */}
       <div className="relative">
-        <p className="font-arabic text-2xl sm:text-3xl md:text-4xl text-white text-center leading-[2] max-w-4xl" dir="rtl">
+        <p className="font-arabic text-2xl sm:text-3xl md:text-4xl text-white text-center leading-[2.5] max-w-4xl" dir="rtl">
           {current.text}
         </p>
         <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary-500/20 text-primary-400 text-xs px-2 py-0.5 rounded-full font-sans">
@@ -38,7 +38,7 @@ export function AyatDisplay({ ayahs, currentIndex, dimmed }: AyatDisplayProps) {
 
       {/* Ayat selanjutnya */}
       {next && (
-        <p className="font-arabic text-lg sm:text-xl text-neutral-700 text-center mt-6 leading-loose max-w-3xl">
+        <p className="font-arabic text-lg sm:text-xl text-neutral-700 text-center mt-6 leading-[2.2] max-w-3xl">
           {next.text}
           <span className="text-xs text-neutral-800 mr-2"> ({next.number})</span>
         </p>
