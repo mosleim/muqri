@@ -28,7 +28,7 @@ export function AyatDisplay({ ayahs, currentIndex, dimmed }: AyatDisplayProps) {
 
       {/* Ayat saat ini */}
       <div className="relative">
-        <p className="font-arabic text-2xl sm:text-3xl md:text-4xl text-white text-center max-w-4xl" dir="rtl" style={{ lineHeight: 3 }}>
+        <p className="font-arabic text-2xl sm:text-3xl md:text-4xl text-white text-center max-w-4xl" dir="rtl" style={{ lineHeight: 2.5 }}>
           {current.text}
         </p>
         <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary-500/20 text-primary-400 text-xs px-2 py-0.5 rounded-full font-sans">
