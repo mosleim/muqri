@@ -5,6 +5,7 @@ interface ReadinessCheckProps {
   poseModel: DetectionStatus;
   faceModel: DetectionStatus;
   calibrated: boolean;
+  calibrating: boolean;
   onStartCalibration: () => void;
   onStart: () => void;
 }
@@ -22,6 +23,7 @@ export function ReadinessCheck({
   poseModel,
   faceModel,
   calibrated,
+  calibrating,
   onStartCalibration,
   onStart,
 }: ReadinessCheckProps) {
@@ -48,15 +50,18 @@ export function ReadinessCheck({
       <div className="flex items-center gap-3 text-sm">
         <StatusDot ok={calibrated} />
         <span className={calibrated ? 'text-white' : 'text-neutral-400'}>
-          Kalibrasi mata
+          {calibrating ? 'Mengkalibrasi...' : calibrated ? 'Kalibrasi mata' : 'Kalibrasi mata'}
         </span>
-        {faceModel === 'ready' && !calibrated && (
+        {faceModel === 'ready' && !calibrated && !calibrating && (
           <button
             onClick={onStartCalibration}
             className="ml-auto text-xs bg-gold/20 text-gold px-3 py-1 rounded-lg hover:bg-gold/30 transition-colors"
           >
             Mulai kalibrasi
           </button>
+        )}
+        {calibrating && (
+          <span className="ml-auto text-xs text-gold animate-pulse">Tatap kamera...</span>
         )}
       </div>
 

@@ -1,18 +1,17 @@
 import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection';
-import * as tf from '@tensorflow/tfjs';
 
 let detector: faceLandmarksDetection.FaceLandmarksDetector | null = null;
 
 export async function loadFaceModel(): Promise<void> {
   if (detector) return;
-  await tf.ready();
   detector = await faceLandmarksDetection.createDetector(
     faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
     {
-      runtime: 'tfjs' as const,
+      runtime: 'mediapipe',
+      solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh',
       refineLandmarks: true,
       maxFaces: 1,
-    }
+    } as faceLandmarksDetection.MediaPipeFaceMeshMediaPipeModelConfig
   );
 }
 

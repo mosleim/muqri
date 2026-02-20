@@ -85,7 +85,7 @@ export function useBlinkDetection(
           cancelAnimationFrame(rafRef.current);
         }
       } catch {
-        // skip frame
+        // skip
       }
     };
 
@@ -119,6 +119,7 @@ export function useBlinkDetection(
 
         if (earData.isClosed) {
           if (eyesClosedStart.current === 0) {
+            // console.log('[Blink] eyes closed. EAR=', earData.ear?.toFixed(3));
             eyesClosedStart.current = now;
           }
         } else {
@@ -127,9 +128,7 @@ export function useBlinkDetection(
             if (
               duration >= BLINK_MIN_DURATION_MS &&
               duration <= BLINK_MAX_DURATION_MS &&
-              now - lastAdvanceTime.current > BLINK_COOLDOWN_MS &&
-              currentPose === 'qiyam' &&
-              isSendekap
+              now - lastAdvanceTime.current > BLINK_COOLDOWN_MS
             ) {
               nextAyah();
               triggerBlinkFeedback();
@@ -159,5 +158,5 @@ export function useBlinkDetection(
     videoRef,
   ]);
 
-  return { startCalibration };
+  return { startCalibration, calibrating };
 }

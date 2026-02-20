@@ -32,7 +32,7 @@ export default function SetupPage() {
 
   // Init detection models
   usePoseDetection(videoRef, ready);
-  const { startCalibration } = useBlinkDetection(videoRef, ready);
+  const { startCalibration, calibrating } = useBlinkDetection(videoRef, ready);
 
   const handleStart = () => {
     usePrayerStore.getState().setMode('detecting');
@@ -66,6 +66,7 @@ export default function SetupPage() {
           poseModel={poseModelStatus}
           faceModel={faceModelStatus}
           calibrated={calibrated}
+          calibrating={calibrating}
           onStartCalibration={startCalibration}
           onStart={handleStart}
         />

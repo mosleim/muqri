@@ -5,6 +5,7 @@ let detector: poseDetection.PoseDetector | null = null;
 
 export async function loadPoseModel(): Promise<void> {
   if (detector) return;
+  await tf.setBackend('webgl');
   await tf.ready();
   detector = await poseDetection.createDetector(
     poseDetection.SupportedModels.MoveNet,

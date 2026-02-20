@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCamera } from '@/hooks/useCamera';
 import { usePoseDetection } from '@/hooks/usePoseDetection';
@@ -77,9 +77,43 @@ export default function PrayerPage() {
 
   if (!selectedSurah) return null;
 
-  const isBlankMode =
-    currentPose !== 'qiyam' && currentPose !== 'unknown';
-  const isDimmed = currentPose === 'qiyam' && !isSendekap;
+  // Debounce blank mode — wait 2.5s before hiding text when pose leaves qiyam
+  const [debouncedBlank, setDebouncedBlank] = useState(false);
+  const blankTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const rawBlank = currentPose !== 'qiyam' && currentPose !== 'unknown';
+
+  useEffect(() => {
+    if (rawBlank) {
+      blankTimerRef.current = setTimeout(() => setDebouncedBlank(true), 2500);
+    } else {
+      if (blankTimerRef.current) clearTimeout(blankTimerRef.current);
+      setDebouncedBlank(false);
+    }
+    return () => {
+      if (blankTimerRef.current) clearTimeout(blankTimerRef.current);
+    };
+  }, [rawBlank]);
+
+  // Debounce sendekap→not-sendekap to prevent flicker from detection noise
+  const [debouncedSendekap, setDebouncedSendekap] = useState(false);
+  const sendekapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (isSendekap) {
+      // Immediately show text when sendekap detected
+      if (sendekapTimerRef.current) clearTimeout(sendekapTimerRef.current);
+      setDebouncedSendekap(true);
+    } else {
+      // Delay before dimming text when leaving sendekap
+      sendekapTimerRef.current = setTimeout(() => setDebouncedSendekap(false), 2000);
+    }
+    return () => {
+      if (sendekapTimerRef.current) clearTimeout(sendekapTimerRef.current);
+    };
+  }, [isSendekap]);
+
+  const isBlankMode = debouncedBlank;
+  const isDimmed = currentPose === 'qiyam' && !debouncedSendekap;
 
   return (
     <div
