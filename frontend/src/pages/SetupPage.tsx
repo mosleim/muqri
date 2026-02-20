@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCamera } from '@/hooks/useCamera';
 import { usePoseDetection } from '@/hooks/usePoseDetection';
@@ -12,7 +12,9 @@ export default function SetupPage() {
   const navigate = useNavigate();
   const { selectedSurah } = usePrayerStore();
   const { videoRef, ready, error, start } = useCamera();
-  const { poseModelStatus, faceModelStatus, calibrated, setCameraReady } = useAppStore();
+  const { poseModelStatus, faceModelStatus, calibrated, setCameraReady, fontSize, setFontSize } = useAppStore();
+
+  const [startAyah, setStartAyah] = useState(1);
 
   // Redirect if no surah selected
   useEffect(() => {
@@ -35,6 +37,7 @@ export default function SetupPage() {
   const { startCalibration, calibrating } = useBlinkDetection(videoRef, ready);
 
   const handleStart = () => {
+    usePrayerStore.getState().setCurrentAyahIndex(startAyah - 1);
     usePrayerStore.getState().setMode('detecting');
     navigate('/prayer');
   };
@@ -59,6 +62,45 @@ export default function SetupPage() {
             Kamera error: {error}
           </p>
         )}
+
+        {/* Settings */}
+        <div className="space-y-3 bg-surface-100 rounded-xl p-4">
+          <div className="flex items-center justify-between">
+            <label className="text-sm text-neutral-400 font-sans">Mulai dari ayat</label>
+            <input
+              type="number"
+              min={1}
+              max={selectedSurah.ayahCount}
+              value={startAyah}
+              onChange={(e) => {
+                const v = Math.max(1, Math.min(selectedSurah.ayahCount, Number(e.target.value) || 1));
+                setStartAyah(v);
+              }}
+              className="w-20 bg-surface-200 text-white text-sm text-center rounded-lg px-2 py-1.5 border border-surface-300 font-sans"
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <label className="text-sm text-neutral-400 font-sans">Ukuran font</label>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setFontSize(Math.max(20, fontSize - 4))}
+                className="w-8 h-8 bg-surface-200 text-white rounded-lg text-sm hover:bg-surface-300 transition-colors"
+              >
+                -
+              </button>
+              <span className="text-sm text-white font-sans w-8 text-center">{fontSize}</span>
+              <button
+                onClick={() => setFontSize(Math.min(56, fontSize + 4))}
+                className="w-8 h-8 bg-surface-200 text-white rounded-lg text-sm hover:bg-surface-300 transition-colors"
+              >
+                +
+              </button>
+            </div>
+          </div>
+          <p className="font-arabic text-neutral-400 text-center" style={{ fontSize }} dir="rtl">
+            بِسۡمِ ٱللَّهِ
+          </p>
+        </div>
 
         {/* Readiness */}
         <ReadinessCheck

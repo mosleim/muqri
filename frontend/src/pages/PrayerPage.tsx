@@ -4,6 +4,7 @@ import { useCamera } from '@/hooks/useCamera';
 import { usePoseDetection } from '@/hooks/usePoseDetection';
 import { useBlinkDetection } from '@/hooks/useBlinkDetection';
 import { usePrayerStore } from '@/stores/prayerStore';
+import { useAppStore } from '@/stores/appStore';
 import { AyatDisplay } from '@/components/prayer/AyatDisplay';
 import { PrompterHeader } from '@/components/prayer/PrompterHeader';
 import { StatusBar } from '@/components/prayer/StatusBar';
@@ -25,6 +26,7 @@ export default function PrayerPage() {
     reset,
   } = usePrayerStore();
   const { videoRef, ready, start } = useCamera();
+  const { fontSize } = useAppStore();
 
   // Start camera
   useEffect(() => {
@@ -148,6 +150,7 @@ export default function PrayerPage() {
             ayahs={selectedSurah.ayahs}
             currentIndex={currentAyahIndex}
             dimmed={isDimmed}
+            fontSize={fontSize}
           />
         </main>
       )}
