@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { PoseType } from '@/types/pose';
 import type { SurahFull, SurahMeta } from '@/types/quran';
+import { fetchSurah } from '@/services/quranService';
 
 type PrayerMode = 'idle' | 'loading' | 'calibrating' | 'detecting' | 'done';
 
@@ -47,7 +48,17 @@ export const usePrayerStore = create<PrayerState>((set, get) => ({
     if (selectedSurah && currentAyahIndex < selectedSurah.ayahs.length - 1) {
       set({ currentAyahIndex: currentAyahIndex + 1 });
     } else if (selectedSurah && currentAyahIndex >= selectedSurah.ayahs.length - 1) {
-      set({ mode: 'done' });
+      // Load next surah if available
+      const nextNumber = selectedSurah.number + 1;
+      if (nextNumber <= 114) {
+        fetchSurah(nextNumber).then((nextSurah) => {
+          set({ selectedSurah: nextSurah, currentAyahIndex: 0 });
+        }).catch(() => {
+          set({ mode: 'done' });
+        });
+      } else {
+        set({ mode: 'done' });
+      }
     }
   },
   prevAyah: () => {
