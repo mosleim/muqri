@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Muqri — Teleprompter Imam</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Amiri:ital,wght@0,400;0,700;1,400&family=Cairo:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --black: #0a0a0a;
+      --gold: #c9a84c;
+      --gold-light: #e8c97a;
+      --gold-dim: #8a6e2f;
+      --white: #f5f0e8;
+      --cream: #ede8d8;
+      --green: #1a3a2a;
+      --green-light: #2a5a40;
+      --red: #8b1a1a;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'Cairo', sans-serif;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ===== ORNAMENT ===== */
+    .ornament {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .ornament::before {
+      content: '';
+      position: absolute;
+      top: -30%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 800px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%);
+    }
+    .ornament::after {
+      content: '';
+      position: absolute;
+      bottom: -20%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(26,58,42,0.4) 0%, transparent 70%);
+    }
+
+    /* ===== PAGES ===== */
+    .page {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .page.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.97);
+    }
+
+    /* ===== HOME PAGE ===== */
+    #page-home {
+      padding: 40px 20px;
+      overflow-y: auto;
+    }
+
+    .logo {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .logo-arabic {
+      font-family: 'Amiri', serif;
+      font-size: 52px;
+      color: var(--gold);
+      letter-spacing: 2px;
+      text-shadow: 0 0 40px rgba(201,168,76,0.3);
+      display: block;
+    }
+    .logo-sub {
+      font-family: 'Cairo', sans-serif;
+      font-size: 13px;
+      color: var(--gold-dim);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-top: 8px;
+      display: block;
+      direction: ltr;
+    }
+
+    .divider {
+      width: 120px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+      margin: 0 auto 40px;
+    }
+
+    .surah-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+      width: 100%;
+      max-width: 800px;
+      direction: rtl;
+    }
+
+    .surah-card {
+      background: rgba(201,168,76,0.04);
+      border: 1px solid rgba(201,168,76,0.15);
+      border-radius: 12px;
+      padding: 16px 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      direction: rtl;
+    }
+    .surah-card:hover {
+      background: rgba(201,168,76,0.1);
+      border-color: rgba(201,168,76,0.4);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(201,168,76,0.1);
+    }
+
+    .surah-number {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--gold-dim);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: var(--gold-dim);
+      font-family: 'Cairo', sans-serif;
+      flex-shrink: 0;
+      direction: ltr;
+    }
+
+    .surah-info { flex: 1; }
+    .surah-name-ar {
+      font-family: 'Amiri', serif;
+      font-size: 20px;
+      color: var(--white);
+      display: block;
+    }
+    .surah-name-id {
+      font-size: 11px;
+      color: rgba(245,240,232,0.4);
+      display: block;
+      margin-top: 2px;
+      direction: ltr;
+      text-align: right;
+    }
+    .surah-ayat-count {
+      font-size: 11px;
+      color: var(--gold-dim);
+      direction: ltr;
+    }
+
+    /* ===== SETUP PAGE ===== */
+    #page-setup {
+      padding: 40px 20px;
+    }
+
+    .setup-box {
+      background: rgba(201,168,76,0.03);
+      border: 1px solid rgba(201,168,76,0.15);
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .setup-title {
+      font-family: 'Amiri', serif;
+      font-size: 28px;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+    .setup-desc {
+      font-size: 13px;
+      color: rgba(245,240,232,0.5);
+      margin-bottom: 32px;
+      direction: ltr;
+    }
+
+    .camera-preview {
+      width: 100%;
+      aspect-ratio: 4/3;
+      background: #111;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      margin-bottom: 24px;
+    }
+    .camera-preview video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+    .camera-preview canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .camera-status {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      direction: ltr;
+    }
+    .camera-status.loading { background: rgba(0,0,0,0.7); color: #aaa; }
+    .camera-status.ready { background: rgba(26,58,42,0.8); color: #6fbf7f; }
+    .camera-status.error { background: rgba(139,26,26,0.8); color: #ff8080; }
+
+    .pose-indicator {
+      font-size: 13px;
+      color: rgba(245,240,232,0.6);
+      margin-bottom: 24px;
+      min-height: 20px;
+      direction: ltr;
+    }
+    .pose-indicator span {
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    .btn {
+      padding: 14px 32px;
+      border-radius: 40px;
+      border: none;
+      cursor: pointer;
+      font-family: 'Cairo', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      letter-spacing: 1px;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+      color: var(--black);
+    }
+    .btn-primary:hover {
+      box-shadow: 0 0 30px rgba(201,168,76,0.4);
+      transform: translateY(-2px);
+    }
+    .btn-primary:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--gold-dim);
+      border: 1px solid rgba(201,168,76,0.2);
+      margin-top: 12px;
+    }
+    .btn-ghost:hover {
+      border-color: var(--gold-dim);
+      color: var(--gold);
+    }
+
+    /* ===== PROMPTER PAGE ===== */
+    #page-prompter {
+      background: var(--black);
+    }
+
+    .prompter-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 20;
+      background: linear-gradient(to bottom, rgba(10,10,10,0.95), transparent);
+    }
+
+    .prompter-surah-name {
+      font-family: 'Amiri', serif;
+      font-size: 22px;
+      color: var(--gold);
+    }
+
+    .prompter-meta {
+      font-size: 12px;
+      color: rgba(245,240,232,0.3);
+      direction: ltr;
+    }
+
+    .prompter-controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .ctrl-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid rgba(201,168,76,0.2);
+      background: transparent;
+      color: var(--gold-dim);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: all 0.2s;
+    }
+    .ctrl-btn:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: rgba(201,168,76,0.08);
+    }
+
+    /* ===== AYAT DISPLAY ===== */
+    .ayat-container {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 40px;
+      text-align: center;
+    }
+
+    .ayat-prev {
+      font-family: 'Amiri Quran', serif;
+      font-size: clamp(24px, 4vw, 40px);
+      color: rgba(245,240,232,0.15);
+      line-height: 1.9;
+      margin-bottom: 32px;
+      transition: all 0.5s ease;
+      max-width: 900px;
+      cursor: pointer;
+    }
+
+    .ayat-current {
+      font-family: 'Amiri Quran', serif;
+      font-size: clamp(36px, 6vw, 72px);
+      color: var(--white);
+      line-height: 1.8;
+      max-width: 1000px;
+      transition: all 0.5s ease;
+      text-shadow: 0 0 60px rgba(201,168,76,0.15);
+      animation: ayatIn 0.5s ease;
+    }
+
+    @keyframes ayatIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .ayat-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border: 1px solid rgba(201,168,76,0.4);
+      border-radius: 50%;
+      font-size: 14px;
+      color: var(--gold);
+      font-family: 'Cairo', sans-serif;
+      margin-right: 8px;
+      direction: ltr;
+      vertical-align: middle;
+    }
+
+    .ayat-next-hint {
+      font-family: 'Amiri Quran', serif;
+      font-size: clamp(18px, 3vw, 28px);
+      color: rgba(245,240,232,0.08);
+      line-height: 1.9;
+      margin-top: 32px;
+      max-width: 900px;
+    }
+
+    /* ===== STATUS BAR ===== */
+    .status-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(to top, rgba(10,10,10,0.95), transparent);
+      z-index: 20;
+    }
+
+    .pose-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      direction: ltr;
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid transparent;
+      transition: all 0.3s;
+    }
+    .pose-badge.qiyam {
+      border-color: rgba(111,191,127,0.4);
+      color: #6fbf7f;
+      background: rgba(26,58,42,0.4);
+    }
+    .pose-badge.ruku {
+      border-color: rgba(201,168,76,0.3);
+      color: var(--gold-dim);
+      background: rgba(201,168,76,0.06);
+    }
+    .pose-badge.sujud {
+      border-color: rgba(100,100,200,0.3);
+      color: #9090e0;
+      background: rgba(50,50,120,0.15);
+    }
+    .pose-badge.duduk {
+      border-color: rgba(200,120,60,0.3);
+      color: #e0a060;
+      background: rgba(100,60,20,0.2);
+    }
+    .pose-badge.unknown {
+      border-color: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.3);
+    }
+
+    .pose-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .blink-badge {
+      font-size: 11px;
+      color: rgba(245,240,232,0.3);
+      direction: ltr;
+    }
+    .blink-badge.detected {
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    .progress-dots {
+      display: flex;
+      gap: 4px;
+    }
+    .progress-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      transition: all 0.3s;
+    }
+    .progress-dot.active {
+      background: var(--gold);
+      width: 16px;
+      border-radius: 2px;
+    }
+    .progress-dot.done {
+      background: rgba(201,168,76,0.4);
+    }
+
+    /* ===== BLANK STATE (ruku/sujud) ===== */
+    .blank-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--black);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 15;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.8s ease;
+    }
+    .blank-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .blank-ornament {
+      font-family: 'Amiri', serif;
+      font-size: 48px;
+      color: rgba(201,168,76,0.08);
+      user-select: none;
+    }
+
+    /* ===== CAMERA MINI ===== */
+    #camera-mini {
+      position: fixed;
+      bottom: 60px;
+      right: 20px;
+      width: 120px;
+      height: 90px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid rgba(201,168,76,0.15);
+      z-index: 25;
+      opacity: 0.6;
+      transition: opacity 0.3s;
+    }
+    #camera-mini:hover { opacity: 1; }
+    #camera-mini video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+    #camera-mini canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    #camera-mini.hidden { display: none; }
+
+    /* ===== TOAST ===== */
+    .toast {
+      position: fixed;
+      top: 70px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(201,168,76,0.15);
+      border: 1px solid rgba(201,168,76,0.3);
+      color: var(--gold);
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-size: 13px;
+      z-index: 100;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      direction: ltr;
+      white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+
+    /* ===== LOADING ===== */
+    .loading-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--black);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      transition: opacity 0.5s;
+    }
+    .loading-screen.hidden { opacity: 0; pointer-events: none; }
+    .loading-ring {
+      width: 60px;
+      height: 60px;
+      border: 2px solid rgba(201,168,76,0.1);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text {
+      font-size: 13px;
+      color: var(--gold-dim);
+      direction: ltr;
+    }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.2); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<div class="ornament"></div>
+
+<!-- Loading -->
+<div class="loading-screen" id="loading-screen">
+  <div style="font-family:'Amiri',serif;font-size:40px;color:var(--gold);margin-bottom:16px;">مُقرئ</div>
+  <div class="loading-ring"></div>
+  <div class="loading-text" id="loading-text">Memuat model AI...</div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ===== HOME PAGE ===== -->
+<div class="page" id="page-home">
+  <div class="logo">
+    <span class="logo-arabic">مُقرئ</span>
+    <span class="logo-sub">Teleprompter Imam Shalat</span>
+  </div>
+  <div class="divider"></div>
+  <div class="surah-grid" id="surah-grid"></div>
+</div>
+
+<!-- ===== SETUP PAGE ===== -->
+<div class="page hidden" id="page-setup">
+  <div class="setup-box">
+    <div class="setup-title" id="setup-surah-name">الإخلاص</div>
+    <div class="setup-desc" id="setup-surah-desc">Pastikan wajah dan tubuh terlihat jelas di kamera</div>
+    
+    <div class="camera-preview">
+      <video id="setup-video" autoplay playsinline muted></video>
+      <canvas id="setup-canvas"></canvas>
+      <div class="camera-status loading" id="camera-status">Memulai kamera...</div>
+    </div>
+
+    <div class="pose-indicator" id="setup-pose-indicator">Mendeteksi posisi...</div>
+
+    <button class="btn btn-primary" id="btn-start" disabled>Mulai Shalat →</button>
+    <br>
+    <button class="btn btn-ghost" id="btn-back-home">← Kembali</button>
+  </div>
+</div>
+
+<!-- ===== PROMPTER PAGE ===== -->
+<div class="page hidden" id="page-prompter">
+  
+  <!-- Header -->
+  <div class="prompter-header">
+    <div>
+      <div class="prompter-surah-name" id="prompter-surah-name">الإخلاص</div>
+      <div class="prompter-meta" id="prompter-meta">Ayat 1 dari 4</div>
+    </div>
+    <div class="prompter-controls">
+      <button class="ctrl-btn" id="btn-prev-ayat" title="Ayat sebelumnya">‹</button>
+      <button class="ctrl-btn" id="btn-next-ayat" title="Ayat berikutnya">›</button>
+      <button class="ctrl-btn" id="btn-exit" title="Keluar">✕</button>
+    </div>
+  </div>
+
+  <!-- Ayat Display -->
+  <div class="ayat-container" id="ayat-container">
+    <div class="ayat-prev" id="ayat-prev"></div>
+    <div class="ayat-current" id="ayat-current"></div>
+    <div class="ayat-next-hint" id="ayat-next"></div>
+  </div>
+
+  <!-- Blank overlay (ruku/sujud) -->
+  <div class="blank-overlay" id="blank-overlay">
+    <div class="blank-ornament">﷽</div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <div class="pose-badge unknown" id="pose-badge">
+      <div class="pose-dot"></div>
+      <span id="pose-label">Mendeteksi...</span>
+    </div>
+    
+    <div class="progress-dots" id="progress-dots"></div>
+    
+    <div class="blink-badge" id="blink-badge">👁 Kedipan mata aktif</div>
+  </div>
+
+</div>
+
+<!-- Camera mini (in prompter) -->
+<div id="camera-mini" class="hidden">
+  <video id="prompter-video" autoplay playsinline muted></video>
+  <canvas id="prompter-canvas"></canvas>
+</div>
+
+<!-- TensorFlow.js -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection@1.0.5/dist/face-landmarks-detection.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/face_mesh.js" crossorigin="anonymous"></script>
+
+<script>
+// ===== QURAN DATA (Juz 30 - Surah pendek) =====
+const SURAHS = [
+  { number: 114, name: "الناس", latin: "An-Nas", ayat: 6 },
+  { number: 113, name: "الفلق", latin: "Al-Falaq", ayat: 5 },
+  { number: 112, name: "الإخلاص", latin: "Al-Ikhlas", ayat: 4 },
+  { number: 111, name: "المسد", latin: "Al-Masad", ayat: 5 },
+  { number: 110, name: "النصر", latin: "An-Nasr", ayat: 3 },
+  { number: 109, name: "الكافرون", latin: "Al-Kafirun", ayat: 6 },
+  { number: 108, name: "الكوثر", latin: "Al-Kautsar", ayat: 3 },
+  { number: 107, name: "الماعون", latin: "Al-Ma'un", ayat: 7 },
+  { number: 106, name: "قريش", latin: "Quraisy", ayat: 4 },
+  { number: 105, name: "الفيل", latin: "Al-Fil", ayat: 5 },
+  { number: 104, name: "الهمزة", latin: "Al-Humazah", ayat: 9 },
+  { number: 103, name: "العصر", latin: "Al-Asr", ayat: 3 },
+  { number: 102, name: "التكاثر", latin: "At-Takasur", ayat: 8 },
+  { number: 101, name: "القارعة", latin: "Al-Qari'ah", ayat: 11 },
+  { number: 78, name: "النبأ", latin: "An-Naba", ayat: 40 },
+  { number: 36, name: "يس", latin: "Yasin", ayat: 83 },
+  { number: 1, name: "الفاتحة", latin: "Al-Fatihah", ayat: 7 },
+];
+
+// ===== STATE =====
+let currentSurah = null;
+let currentAyatIndex = 0;
+let ayatData = [];
+let poseDetector = null;
+let faceDetector = null;
+let videoStream = null;
+let isRunning = false;
+let currentPose = 'unknown';
+let lastBlinkTime = { left: 0, right: 0 };
+let eyeClosedStart = { left: 0, right: 0 };
+let lastAdvanceTime = 0;
+
+// ===== PAGES =====
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+}
+
+// ===== TOAST =====
+function showToast(msg, duration = 2000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ===== SURAH LIST =====
+function renderSurahGrid() {
+  const grid = document.getElementById('surah-grid');
+  grid.innerHTML = SURAHS.map(s => `
+    <div class="surah-card" onclick="selectSurah(${s.number})">
+      <div class="surah-number">${s.number}</div>
+      <div class="surah-info">
+        <span class="surah-name-ar">${s.name}</span>
+        <span class="surah-name-id">${s.latin}</span>
+      </div>
+      <div class="surah-ayat-count">${s.ayat} ayat</div>
+    </div>
+  `).join('');
+}
+
+// ===== SELECT SURAH =====
+async function selectSurah(number) {
+  currentSurah = SURAHS.find(s => s.number === number);
+  document.getElementById('setup-surah-name').textContent = currentSurah.name;
+  document.getElementById('setup-surah-desc').textContent = `${currentSurah.latin} • ${currentSurah.ayat} ayat`;
+  showPage('page-setup');
+  await startCamera('setup');
+  await loadAyat(number);
+}
+
+// ===== LOAD AYAT =====
+async function loadAyat(surahNumber) {
+  try {
+    const res = await fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}/ar.alafasy`);
+    const data = await res.json();
+    ayatData = data.data.ayahs.map(a => ({
+      number: a.numberInSurah,
+      text: a.text
+    }));
+    document.getElementById('btn-start').disabled = false;
+    showToast('Surah berhasil dimuat ✓');
+  } catch (e) {
+    // Fallback data untuk testing
+    ayatData = [
+      { number: 1, text: "قُلْ هُوَ اللَّهُ أَحَدٌ ۝" },
+      { number: 2, text: "اللَّهُ الصَّمَدُ ۝" },
+      { number: 3, text: "لَمْ يَلِدْ وَلَمْ يُولَدْ ۝" },
+      { number: 4, text: "وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ ۝" },
+    ];
+    document.getElementById('btn-start').disabled = false;
+    showToast('Menggunakan data offline');
+  }
+}
+
+// ===== CAMERA =====
+async function startCamera(mode) {
+  try {
+    videoStream = await navigator.mediaDevices.getUserMedia({ 
+      video: { facingMode: 'user', width: 640, height: 480 }, 
+      audio: false 
+    });
+    
+    const videoId = mode === 'setup' ? 'setup-video' : 'prompter-video';
+    const video = document.getElementById(videoId);
+    video.srcObject = videoStream;
+    await new Promise(r => video.onloadedmetadata = r);
+    
+    document.getElementById('camera-status').textContent = 'Kamera aktif ✓';
+    document.getElementById('camera-status').className = 'camera-status ready';
+    
+    return video;
+  } catch (e) {
+    document.getElementById('camera-status').textContent = 'Kamera tidak tersedia';
+    document.getElementById('camera-status').className = 'camera-status error';
+    document.getElementById('btn-start').disabled = false;
+    return null;
+  }
+}
+
+// ===== POSE DETECTION =====
+async function initPoseDetector() {
+  try {
+    poseDetector = await poseDetection.createDetector(
+      poseDetection.SupportedModels.MoveNet,
+      { modelType: poseDetection.movenet.modelType.SINGLEPOSE_THUNDER }
+    );
+    return true;
+  } catch(e) {
+    console.warn('Pose detector failed:', e);
+    return false;
+  }
+}
+
+async function initFaceDetector() {
+  try {
+    faceDetector = await faceLandmarksDetection.createDetector(
+      faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
+      { runtime: 'mediapipe', solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619' }
+    );
+    return true;
+  } catch(e) {
+    console.warn('Face detector failed:', e);
+    return false;
+  }
+}
+
+// ===== POSE CLASSIFICATION =====
+function classifyPose(keypoints) {
+  const kp = {};
+  keypoints.forEach(k => { kp[k.name] = k; });
+
+  const get = name => kp[name] || { x: 0, y: 0, score: 0 };
+  
+  const nose = get('nose');
+  const leftShoulder = get('left_shoulder');
+  const rightShoulder = get('right_shoulder');
+  const leftHip = get('left_hip');
+  const rightHip = get('right_hip');
+  const leftKnee = get('left_knee');
+  const rightKnee = get('right_knee');
+
+  if (nose.score < 0.3) return 'unknown';
+
+  const shoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+  const hipY = (leftHip.y + rightHip.y) / 2;
+  const kneeY = (leftKnee.y + rightKnee.y) / 2;
+
+  // Sujud: hidung dekat dengan lantai (y tinggi), badan horizontal
+  if (nose.y > hipY * 0.85) return 'sujud';
+  
+  // Ruku: badan membungkuk, bahu setinggi pinggul
+  if (Math.abs(shoulderY - hipY) < 80 && shoulderY < nose.y) return 'ruku';
+  
+  // Duduk: lutut di atas / pinggul rendah
+  if (hipY > kneeY * 0.7 && nose.y < hipY) return 'duduk';
+  
+  // Qiyam: berdiri tegak
+  return 'qiyam';
+}
+
+// ===== BLINK DETECTION =====
+function detectBlink(landmarks) {
+  // Eye landmark indices for MediaPipe FaceMesh
+  // Left eye: 159 (top), 145 (bottom) 
+  // Right eye: 386 (top), 374 (bottom)
+  
+  if (!landmarks || landmarks.length < 400) return null;
+  
+  const getPoint = (idx) => landmarks[idx];
+  
+  try {
+    const leftTop = getPoint(159);
+    const leftBottom = getPoint(145);
+    const rightTop = getPoint(386);
+    const rightBottom = getPoint(374);
+    
+    if (!leftTop || !leftBottom || !rightTop || !rightBottom) return null;
+
+    const leftEAR = Math.abs(leftTop.y - leftBottom.y);
+    const rightEAR = Math.abs(rightTop.y - rightBottom.y);
+
+    return { leftEAR, rightEAR };
+  } catch(e) {
+    return null;
+  }
+}
+
+// ===== DETECTION LOOP =====
+let detectionLoop = null;
+
+async function startDetectionLoop(videoEl, mode) {
+  isRunning = true;
+  const BLINK_THRESHOLD = 0.008;
+  const BLINK_MIN_DURATION = 120; // ms
+  const BLINK_MAX_DURATION = 400; // ms
+  const ADVANCE_COOLDOWN = 1500; // ms
+
+  async function loop() {
+    if (!isRunning) return;
+
+    try {
+      // Pose detection
+      if (poseDetector && videoEl.readyState >= 2) {
+        const poses = await poseDetector.estimatePoses(videoEl);
+        if (poses && poses.length > 0) {
+          const pose = classifyPose(poses[0].keypoints);
+          
+          if (mode === 'setup') {
+            updateSetupPose(pose);
+          } else {
+            updatePrompterPose(pose);
+          }
+        }
+      }
+
+      // Face / blink detection
+      if (faceDetector && videoEl.readyState >= 2 && mode === 'prompter') {
+        const faces = await faceDetector.estimateFaces(videoEl);
+        if (faces && faces.length > 0) {
+          const landmarks = faces[0].keypoints;
+          const ear = detectBlink(landmarks);
+          
+          if (ear) {
+            const now = Date.now();
+            
+            // LEFT EYE → Next ayat
+            if (ear.leftEAR < BLINK_THRESHOLD) {
+              if (!eyeClosedStart.left) eyeClosedStart.left = now;
+            } else {
+              if (eyeClosedStart.left) {
+                const duration = now - eyeClosedStart.left;
+                if (duration >= BLINK_MIN_DURATION && duration <= BLINK_MAX_DURATION) {
+                  if (now - lastAdvanceTime > ADVANCE_COOLDOWN && currentPose === 'qiyam') {
+                    nextAyat();
+                    lastAdvanceTime = now;
+                    showToast('← Kedip kiri: Ayat selanjutnya');
+                  }
+                }
+                eyeClosedStart.left = 0;
+              }
+            }
+            
+            // RIGHT EYE → Prev ayat
+            if (ear.rightEAR < BLINK_THRESHOLD) {
+              if (!eyeClosedStart.right) eyeClosedStart.right = now;
+            } else {
+              if (eyeClosedStart.right) {
+                const duration = now - eyeClosedStart.right;
+                if (duration >= BLINK_MIN_DURATION && duration <= BLINK_MAX_DURATION) {
+                  if (now - lastAdvanceTime > ADVANCE_COOLDOWN && currentPose === 'qiyam') {
+                    prevAyat();
+                    lastAdvanceTime = now;
+                    showToast('Kedip kanan: Ayat sebelumnya →');
+                  }
+                }
+                eyeClosedStart.right = 0;
+              }
+            }
+          }
+        }
+      }
+    } catch(e) {}
+
+    detectionLoop = requestAnimationFrame(loop);
+  }
+
+  loop();
+}
+
+function stopDetectionLoop() {
+  isRunning = false;
+  if (detectionLoop) cancelAnimationFrame(detectionLoop);
+}
+
+// ===== UPDATE UI =====
+function updateSetupPose(pose) {
+  const labels = {
+    qiyam: '🧍 Qiyam — Posisi terdeteksi',
+    ruku: '🙇 Ruku — Terdeteksi',
+    sujud: '🤲 Sujud — Terdeteksi',
+    duduk: '🪑 Duduk — Terdeteksi',
+    unknown: 'Mencari posisi tubuh...'
+  };
+  document.getElementById('setup-pose-indicator').innerHTML = 
+    `Posisi: <span>${labels[pose] || labels.unknown}</span>`;
+  currentPose = pose;
+}
+
+function updatePrompterPose(pose) {
+  if (pose === currentPose) return;
+  currentPose = pose;
+
+  const badge = document.getElementById('pose-badge');
+  const label = document.getElementById('pose-label');
+  const blank = document.getElementById('blank-overlay');
+
+  const config = {
+    qiyam: { class: 'qiyam', text: 'Qiyam' },
+    ruku: { class: 'ruku', text: 'Ruku' },
+    sujud: { class: 'sujud', text: 'Sujud' },
+    duduk: { class: 'duduk', text: 'Duduk' },
+    unknown: { class: 'unknown', text: 'Mendeteksi...' },
+  };
+
+  const cfg = config[pose] || config.unknown;
+  badge.className = `pose-badge ${cfg.class}`;
+  label.textContent = cfg.text;
+
+  // Blank screen saat bukan qiyam
+  if (pose === 'qiyam' || pose === 'unknown') {
+    blank.classList.remove('active');
+  } else {
+    blank.classList.add('active');
+  }
+}
+
+// ===== AYAT NAVIGATION =====
+function renderAyat() {
+  const prev = ayatData[currentAyatIndex - 1];
+  const curr = ayatData[currentAyatIndex];
+  const next = ayatData[currentAyatIndex + 1];
+
+  document.getElementById('ayat-prev').textContent = prev ? prev.text : '';
+  document.getElementById('ayat-current').innerHTML = 
+    `<span class="ayat-number">${curr.number}</span>${curr.text}`;
+  document.getElementById('ayat-next').textContent = next ? next.text : '';
+
+  document.getElementById('prompter-meta').textContent = 
+    `Ayat ${curr.number} dari ${ayatData.length}`;
+
+  // Progress dots
+  const maxDots = Math.min(ayatData.length, 20);
+  const dots = document.getElementById('progress-dots');
+  dots.innerHTML = Array.from({length: maxDots}, (_, i) => {
+    let cls = 'progress-dot';
+    if (i === currentAyatIndex) cls += ' active';
+    else if (i < currentAyatIndex) cls += ' done';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+}
+
+function nextAyat() {
+  if (currentAyatIndex < ayatData.length - 1) {
+    currentAyatIndex++;
+    renderAyat();
+  } else {
+    showToast('Sudah ayat terakhir ✓');
+  }
+}
+
+function prevAyat() {
+  if (currentAyatIndex > 0) {
+    currentAyatIndex--;
+    renderAyat();
+  }
+}
+
+// ===== START PROMPTER =====
+async function startPrompter() {
+  currentAyatIndex = 0;
+  showPage('page-prompter');
+  
+  document.getElementById('prompter-surah-name').textContent = currentSurah.name;
+  document.getElementById('camera-mini').classList.remove('hidden');
+  
+  // Transfer stream ke prompter video
+  const prompterVideo = document.getElementById('prompter-video');
+  prompterVideo.srcObject = videoStream;
+  
+  renderAyat();
+  startDetectionLoop(prompterVideo, 'prompter');
+}
+
+// ===== EXIT =====
+function exitPrompter() {
+  stopDetectionLoop();
+  if (videoStream) {
+    videoStream.getTracks().forEach(t => t.stop());
+    videoStream = null;
+  }
+  document.getElementById('camera-mini').classList.add('hidden');
+  document.getElementById('blank-overlay').classList.remove('active');
+  currentPose = 'unknown';
+  showPage('page-home');
+}
+
+// ===== EVENT LISTENERS =====
+document.getElementById('btn-start').addEventListener('click', startPrompter);
+document.getElementById('btn-back-home').addEventListener('click', () => {
+  stopDetectionLoop();
+  if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
+  showPage('page-home');
+});
+document.getElementById('btn-exit').addEventListener('click', exitPrompter);
+document.getElementById('btn-next-ayat').addEventListener('click', nextAyat);
+document.getElementById('btn-prev-ayat').addEventListener('click', prevAyat);
+
+// Keyboard shortcut
+document.addEventListener('keydown', e => {
+  const page = document.getElementById('page-prompter');
+  if (page.classList.contains('hidden')) return;
+  if (e.code === 'ArrowRight' || e.code === 'Space') nextAyat();
+  if (e.code === 'ArrowLeft') prevAyat();
+  if (e.code === 'Escape') exitPrompter();
+});
+
+// ===== INIT =====
+async function init() {
+  const loadingText = document.getElementById('loading-text');
+  
+  loadingText.textContent = 'Memuat TensorFlow.js...';
+  await tf.ready();
+  
+  loadingText.textContent = 'Memuat model pose detection...';
+  await initPoseDetector();
+  
+  loadingText.textContent = 'Memuat model face detection...';
+  await initFaceDetector();
+
+  loadingText.textContent = 'Siap!';
+  await new Promise(r => setTimeout(r, 500));
+  
+  document.getElementById('loading-screen').classList.add('hidden');
+  renderSurahGrid();
+}
+
+init();
+</script>
+</body>
+</html>

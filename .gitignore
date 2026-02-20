@@ -1,0 +1,49 @@
+# Copilot
+.github/copilot-instructions.md
+next-step.js
+next.txt
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# Backend
+backend/tmp/
+backend/bin/
+backend/coverage.out
+backend/coverage.html
+backend/telequran-backend
+
+# Frontend
+frontend/node_modules/
+frontend/build/
+frontend/.react-router/
+frontend/coverage/
+frontend/package-lock.json
+
+# E2E
+e2e/node_modules/
+e2e/results/
+e2e/reports/
+e2e/blob-report/
+backend/server
+
+# Docker
+docker-compose.override.yml
+
+workflow.development.env
+workflow.production.env
+PROD_BACKEND_ENV_FILE
+PROD_FRONTEND_ENV_FILE
+
+tmp
