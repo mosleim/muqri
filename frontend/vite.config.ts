@@ -27,10 +27,10 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,woff2,json}'],
         runtimeCaching: [
           {
-            urlPattern: /\/api\//,
+            urlPattern: /\/data\//,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'quran-api-cache',
+              cacheName: 'quran-data-cache',
               expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
             },
           },
@@ -43,13 +43,6 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-      },
-    },
   },
   build: {
     outDir: '../dist',

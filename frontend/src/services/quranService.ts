@@ -1,22 +1,24 @@
 import type { SurahMeta, SurahFull } from '@/types/quran';
 import { cacheSurah, getCachedSurah } from './storageService';
 
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error?: string;
+interface QuranData {
+  surahs: (SurahMeta & { ayahs: { number: number; text: string; juz: number; page: number }[] })[];
 }
 
-async function fetchJSON<T>(url: string): Promise<T> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const json: ApiResponse<T> = await res.json();
-  if (!json.success) throw new Error(json.error ?? 'Unknown error');
-  return json.data;
+let quranDataCache: QuranData | null = null;
+
+async function loadQuranData(): Promise<QuranData> {
+  if (quranDataCache) return quranDataCache;
+  const res = await fetch('/data/quran.json');
+  if (!res.ok) throw new Error(`Failed to load quran.json: HTTP ${res.status}`);
+  quranDataCache = await res.json();
+  return quranDataCache;
 }
 
 export async function fetchSurahList(): Promise<SurahMeta[]> {
-  return fetchJSON<SurahMeta[]>('/api/quran/meta');
+  const res = await fetch('/data/surah-meta.json');
+  if (!res.ok) throw new Error(`Failed to load surah-meta.json: HTTP ${res.status}`);
+  return res.json();
 }
 
 export async function fetchSurah(number: number): Promise<SurahFull> {
@@ -24,7 +26,20 @@ export async function fetchSurah(number: number): Promise<SurahFull> {
   const cached = await getCachedSurah(number);
   if (cached) return cached as SurahFull;
 
-  const data = await fetchJSON<SurahFull>(`/api/quran/surah/${number}`);
-  await cacheSurah(number, data);
-  return data;
+  const data = await loadQuranData();
+  const surah = data.surahs.find((s) => s.number === number);
+  if (!surah) throw new Error(`Surah ${number} not found`);
+
+  const result: SurahFull = {
+    number: surah.number,
+    name: surah.name,
+    latinName: surah.latinName,
+    englishName: surah.englishName,
+    ayahCount: surah.ayahCount,
+    revelationType: surah.revelationType,
+    ayahs: surah.ayahs,
+  };
+
+  await cacheSurah(number, result);
+  return result;
 }
