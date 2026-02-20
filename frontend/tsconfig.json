@@ -16,11 +16,9 @@
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
-    },
-    "ignoreDeprecations": "5.0"
+      "@/*": ["./src/*"]
+    }
   },
   "include": ["src", "vite-env.d.ts"]
 }
