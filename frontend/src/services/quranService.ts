@@ -11,8 +11,9 @@ async function loadQuranData(): Promise<QuranData> {
   if (quranDataCache) return quranDataCache;
   const res = await fetch('/data/quran.json');
   if (!res.ok) throw new Error(`Failed to load quran.json: HTTP ${res.status}`);
-  quranDataCache = await res.json();
-  return quranDataCache;
+  const data: QuranData = await res.json();
+  quranDataCache = data;
+  return data;
 }
 
 export async function fetchSurahList(): Promise<SurahMeta[]> {
