@@ -1,10 +1,49 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+
+/**
+ * Vite plugin to fix @mediapipe/face_mesh for production builds.
+ *
+ * The package uses Google Closure Compiler output with `(function(){var wa=this||self;...}).call(this)`
+ * which sets FaceMesh on globalThis/window via P(), but NOT as module.exports.
+ * In Vite production builds, Rollup sees an empty module namespace → "FaceMesh is not a constructor".
+ *
+ * This plugin appends explicit CJS exports so @rollup/plugin-commonjs wraps it correctly.
+ */
+function mediaPipePlugin(): Plugin {
+  return {
+    name: 'mediapipe-face-mesh-fix',
+    load(id) {
+      if (path.basename(id) === 'face_mesh.js' && id.includes('@mediapipe')) {
+        let code = readFileSync(id, 'utf-8');
+        code += `
+exports.FaceMesh = self.FaceMesh;
+exports.FACEMESH_LIPS = self.FACEMESH_LIPS;
+exports.FACEMESH_LEFT_EYE = self.FACEMESH_LEFT_EYE;
+exports.FACEMESH_LEFT_EYEBROW = self.FACEMESH_LEFT_EYEBROW;
+exports.FACEMESH_LEFT_IRIS = self.FACEMESH_LEFT_IRIS;
+exports.FACEMESH_RIGHT_EYE = self.FACEMESH_RIGHT_EYE;
+exports.FACEMESH_RIGHT_EYEBROW = self.FACEMESH_RIGHT_EYEBROW;
+exports.FACEMESH_RIGHT_IRIS = self.FACEMESH_RIGHT_IRIS;
+exports.FACEMESH_FACE_OVAL = self.FACEMESH_FACE_OVAL;
+exports.FACEMESH_CONTOURS = self.FACEMESH_CONTOURS;
+exports.FACEMESH_TESSELATION = self.FACEMESH_TESSELATION;
+exports.FACE_GEOMETRY = self.FACE_GEOMETRY;
+`;
+        return { code, map: null };
+      }
+      return null;
+    },
+  };
+}
 
 export default defineConfig({
   plugins: [
+    mediaPipePlugin(),
     react(),
     VitePWA({
       registerType: 'autoUpdate',
@@ -48,6 +87,9 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    commonjsOptions: {
+      transformMixedEsModules: true,
+    },
     rollupOptions: {
       output: {
         manualChunks: {
