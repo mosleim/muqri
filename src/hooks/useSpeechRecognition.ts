@@ -6,7 +6,8 @@
  */
 
 import { useEffect, useRef, useCallback, useState } from 'react';
-import { combinedSimilarity } from '@/lib/textSimilarity';
+import { combinedSimilarity, tokenOverlap, levenshteinSimilarity } from '@/lib/textSimilarity';
+import { normalizeArabic } from '@/lib/arabicUtils';
 
 // TypeScript declarations for Web Speech API
 interface SpeechRecognitionEvent extends Event {
@@ -116,9 +117,17 @@ export function useSpeechRecognition({
 
         if (targetText && !matchedRef.current) {
           const score = combinedSimilarity(fullTranscript, targetText);
+          const overlap = tokenOverlap(fullTranscript, targetText);
+          const lev = levenshteinSimilarity(fullTranscript, targetText);
           setSimilarity(score);
 
+          console.log('[Speech] Transcript:', fullTranscript);
+          console.log('[Speech] Target (normalized):', normalizeArabic(targetText));
+          console.log('[Speech] Scores - combined:', score.toFixed(3),
+            'overlap:', overlap.toFixed(3), 'levenshtein:', lev.toFixed(3));
+
           if (score >= SIMILARITY_THRESHOLD) {
+            console.log('[Speech] MATCH - advancing ayat');
             matchedRef.current = true;
             onMatch();
           }

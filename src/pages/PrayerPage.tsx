@@ -156,9 +156,12 @@ export default function PrayerPage() {
 
         {/* Transcript preview */}
         {transcript && (
-          <div className="max-w-2xl mx-auto mt-1">
-            <p className="text-neutral-500 text-xs font-arabic text-right truncate" dir="rtl">
+          <div className="max-w-2xl mx-auto mt-1 space-y-1">
+            <p className="text-white text-sm font-arabic text-right" dir="rtl">
               {transcript}
+            </p>
+            <p className="text-neutral-600 text-[10px] font-sans">
+              combined: {(similarity * 100).toFixed(1)}% | threshold: 45%
             </p>
           </div>
         )}
