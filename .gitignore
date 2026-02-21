@@ -42,3 +42,4 @@ PROD_FRONTEND_ENV_FILE
 tmp
 .vscode/settings.json
 node_modules
+tsconfig.tsbuildinfo
