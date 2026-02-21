@@ -10,8 +10,8 @@ export interface SurahMeta {
 export interface Ayah {
   number: number;
   text: string;
-  juz: number;
-  page: number;
+  juz?: number;
+  page?: number;
 }
 
 export interface SurahFull extends SurahMeta {

@@ -27,11 +27,11 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,woff2,json}'],
         runtimeCaching: [
           {
-            urlPattern: /\/data\//,
+            urlPattern: /cdn\.jsdelivr\.net\/npm\/quran-json/,
             handler: 'CacheFirst',
             options: {
               cacheName: 'quran-data-cache',
-              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 30 },
             },
           },
         ],

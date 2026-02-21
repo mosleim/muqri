@@ -1,44 +1,61 @@
 import type { SurahMeta, SurahFull } from '@/types/quran';
 import { cacheSurah, getCachedSurah } from './storageService';
 
-interface QuranData {
-  surahs: (SurahMeta & { ayahs: { number: number; text: string; juz: number; page: number }[] })[];
+const QURAN_CDN_URL = 'https://cdn.jsdelivr.net/npm/quran-json@3.1.2/dist/quran.json';
+
+interface CdnVerse {
+  id: number;
+  text: string;
 }
 
-let quranDataCache: QuranData | null = null;
+interface CdnSurah {
+  id: number;
+  name: string;
+  transliteration: string;
+  type: string;
+  total_verses: number;
+  verses: CdnVerse[];
+}
 
-async function loadQuranData(): Promise<QuranData> {
-  if (quranDataCache) return quranDataCache;
-  const res = await fetch('/data/quran.json');
-  if (!res.ok) throw new Error(`Failed to load quran.json: HTTP ${res.status}`);
-  const data: QuranData = await res.json();
-  quranDataCache = data;
+let cdnCache: CdnSurah[] | null = null;
+
+async function loadCdnData(): Promise<CdnSurah[]> {
+  if (cdnCache) return cdnCache;
+  const res = await fetch(QURAN_CDN_URL);
+  if (!res.ok) throw new Error(`Failed to load quran CDN: HTTP ${res.status}`);
+  const data: CdnSurah[] = await res.json();
+  cdnCache = data;
   return data;
 }
 
 export async function fetchSurahList(): Promise<SurahMeta[]> {
-  const res = await fetch('/data/surah-meta.json');
-  if (!res.ok) throw new Error(`Failed to load surah-meta.json: HTTP ${res.status}`);
-  return res.json();
+  const data = await loadCdnData();
+  return data.map((s) => ({
+    number: s.id,
+    name: s.name,
+    latinName: s.transliteration,
+    englishName: s.transliteration,
+    ayahCount: s.total_verses,
+    revelationType: s.type,
+  }));
 }
 
 export async function fetchSurah(number: number): Promise<SurahFull> {
-  // Check cache first
   const cached = await getCachedSurah(number);
   if (cached) return cached as SurahFull;
 
-  const data = await loadQuranData();
-  const surah = data.surahs.find((s) => s.number === number);
+  const data = await loadCdnData();
+  const surah = data.find((s) => s.id === number);
   if (!surah) throw new Error(`Surah ${number} not found`);
 
   const result: SurahFull = {
-    number: surah.number,
+    number: surah.id,
     name: surah.name,
-    latinName: surah.latinName,
-    englishName: surah.englishName,
-    ayahCount: surah.ayahCount,
-    revelationType: surah.revelationType,
-    ayahs: surah.ayahs,
+    latinName: surah.transliteration,
+    englishName: surah.transliteration,
+    ayahCount: surah.total_verses,
+    revelationType: surah.type,
+    ayahs: surah.verses.map((v) => ({ number: v.id, text: v.text })),
   };
 
   await cacheSurah(number, result);
