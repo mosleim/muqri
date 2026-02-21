@@ -8,7 +8,6 @@ import {
   BLINK_MIN_DURATION_MS,
   BLINK_MAX_DURATION_MS,
   BLINK_COOLDOWN_MS,
-  EAR_CALIBRATION_DURATION_MS,
 } from '@/lib/constants';
 
 export function useBlinkDetection(
@@ -19,7 +18,6 @@ export function useBlinkDetection(
   const eyesClosedStart = useRef<number>(0);
   const lastAdvanceTime = useRef<number>(0);
   const calibrationSamples = useRef<number[]>([]);
-  const calibrationStart = useRef<number>(0);
   const [calibrating, setCalibrating] = useState(false);
 
   const { setFaceModelStatus, earBaseline, setEarBaseline, setCalibrated, calibrated } =
@@ -48,7 +46,6 @@ export function useBlinkDetection(
   // Start calibration on button click
   const startCalibration = useCallback(() => {
     calibrationSamples.current = [];
-    calibrationStart.current = Date.now();
     setCalibrated(false);
     setCalibrating(true);
   }, [setCalibrated]);
@@ -57,40 +54,46 @@ export function useBlinkDetection(
   useEffect(() => {
     if (!enabled || !calibrating) return;
 
-    const interval = 1000 / DETECTION_FPS;
-    let lastTime = 0;
+    const CALIBRATION_MIN_SAMPLES = 5;
+    let running = true;
 
-    const loop = async (time: number) => {
-      rafRef.current = requestAnimationFrame(loop);
-      if (time - lastTime < interval) return;
-      lastTime = time;
+    const loop = async () => {
+      if (!running) return;
 
       const video = videoRef.current;
-      if (!video || video.readyState < 2) return;
+      if (!video || video.readyState < 2) {
+        rafRef.current = requestAnimationFrame(loop);
+        return;
+      }
 
       try {
         const landmarks = await detectFace(video);
-        if (landmarks.length === 0) return;
+        if (landmarks.length > 0) {
+          const baseline = computeBaselineEAR(landmarks);
+          calibrationSamples.current.push(baseline);
 
-        const baseline = computeBaselineEAR(landmarks);
-        calibrationSamples.current.push(baseline);
-
-        if (Date.now() - calibrationStart.current >= EAR_CALIBRATION_DURATION_MS) {
-          const avg =
-            calibrationSamples.current.reduce((a, b) => a + b, 0) /
-            calibrationSamples.current.length;
-          setEarBaseline(avg);
-          setCalibrated(true);
-          setCalibrating(false);
-          cancelAnimationFrame(rafRef.current);
+          if (calibrationSamples.current.length >= CALIBRATION_MIN_SAMPLES) {
+            const avg =
+              calibrationSamples.current.reduce((a, b) => a + b, 0) /
+              calibrationSamples.current.length;
+            setEarBaseline(avg);
+            setCalibrated(true);
+            setCalibrating(false);
+            return;
+          }
         }
       } catch {
-        // skip
+        // skip frame
+      }
+
+      if (running) {
+        rafRef.current = requestAnimationFrame(loop);
       }
     };
 
     rafRef.current = requestAnimationFrame(loop);
     return () => {
+      running = false;
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, [enabled, calibrating, videoRef, setEarBaseline, setCalibrated]);
