@@ -33,7 +33,7 @@ export function SurahGrid({ surahs, onSelect }: SurahGridProps) {
           className="w-full bg-surface-100 border border-surface-300/30 rounded-lg px-4 py-3 text-white placeholder-neutral-500 focus:outline-none focus:border-primary-500/50 font-sans text-sm"
         />
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+      <div dir="rtl" className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
         {filtered.map((s) => (
           <SurahCard key={s.number} surah={s} onClick={() => onSelect(s)} />
         ))}
