@@ -2,19 +2,10 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
-import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 export default defineConfig({
   plugins: [
     react(),
-    viteStaticCopy({
-      targets: [
-        {
-          src: 'node_modules/@mediapipe/face_mesh/*',
-          dest: 'face_mesh',
-        },
-      ],
-    }),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['fonts/**/*'],

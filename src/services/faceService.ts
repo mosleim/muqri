@@ -4,15 +4,28 @@ let detector: faceLandmarksDetection.FaceLandmarksDetector | null = null;
 
 export async function loadFaceModel(): Promise<void> {
   if (detector) return;
-  detector = await faceLandmarksDetection.createDetector(
-    faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
-    {
-      runtime: 'mediapipe',
-      solutionPath: '/face_mesh',
-      refineLandmarks: true,
-      maxFaces: 1,
-    } as faceLandmarksDetection.MediaPipeFaceMeshMediaPipeModelConfig
-  );
+
+  // Try mediapipe runtime first (fast WASM), fall back to tfjs (slower but universal)
+  try {
+    detector = await faceLandmarksDetection.createDetector(
+      faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
+      {
+        runtime: 'mediapipe',
+        solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh',
+        refineLandmarks: true,
+        maxFaces: 1,
+      } as faceLandmarksDetection.MediaPipeFaceMeshMediaPipeModelConfig
+    );
+  } catch {
+    detector = await faceLandmarksDetection.createDetector(
+      faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
+      {
+        runtime: 'tfjs',
+        refineLandmarks: true,
+        maxFaces: 1,
+      } as faceLandmarksDetection.MediaPipeFaceMeshTfjsModelConfig
+    );
+  }
 }
 
 export interface FaceLandmark {
