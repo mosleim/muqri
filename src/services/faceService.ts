@@ -7,6 +7,7 @@ export async function loadFaceModel(): Promise<void> {
 
   // Try mediapipe runtime first (fast WASM), fall back to tfjs (slower but universal)
   try {
+    console.log('[FaceModel] Loading mediapipe runtime...');
     detector = await faceLandmarksDetection.createDetector(
       faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
       {
@@ -16,7 +17,9 @@ export async function loadFaceModel(): Promise<void> {
         maxFaces: 1,
       } as faceLandmarksDetection.MediaPipeFaceMeshMediaPipeModelConfig
     );
-  } catch {
+    console.log('[FaceModel] mediapipe runtime loaded OK');
+  } catch (e) {
+    console.warn('[FaceModel] mediapipe failed, falling back to tfjs:', e);
     detector = await faceLandmarksDetection.createDetector(
       faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
       {
@@ -25,6 +28,7 @@ export async function loadFaceModel(): Promise<void> {
         maxFaces: 1,
       } as faceLandmarksDetection.MediaPipeFaceMeshTfjsModelConfig
     );
+    console.log('[FaceModel] tfjs runtime loaded OK');
   }
 }
 

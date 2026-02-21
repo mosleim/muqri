@@ -56,6 +56,7 @@ export function useBlinkDetection(
 
     const CALIBRATION_MIN_SAMPLES = 5;
     let running = true;
+    console.log('[Calibration] Starting calibration loop...');
 
     const loop = async () => {
       if (!running) return;
@@ -67,23 +68,29 @@ export function useBlinkDetection(
       }
 
       try {
+        const t0 = performance.now();
         const landmarks = await detectFace(video);
+        const dt = Math.round(performance.now() - t0);
         if (landmarks.length > 0) {
           const baseline = computeBaselineEAR(landmarks);
           calibrationSamples.current.push(baseline);
+          console.log(`[Calibration] Sample ${calibrationSamples.current.length}/${CALIBRATION_MIN_SAMPLES} EAR=${baseline.toFixed(3)} (${dt}ms)`);
 
           if (calibrationSamples.current.length >= CALIBRATION_MIN_SAMPLES) {
             const avg =
               calibrationSamples.current.reduce((a, b) => a + b, 0) /
               calibrationSamples.current.length;
+            console.log(`[Calibration] Done. Baseline EAR=${avg.toFixed(3)}`);
             setEarBaseline(avg);
             setCalibrated(true);
             setCalibrating(false);
             return;
           }
+        } else {
+          console.log(`[Calibration] No face detected (${dt}ms)`);
         }
-      } catch {
-        // skip frame
+      } catch (e) {
+        console.warn('[Calibration] Detection error:', e);
       }
 
       if (running) {
