@@ -7,10 +7,11 @@ export async function loadFaceModel(): Promise<void> {
   detector = await faceLandmarksDetection.createDetector(
     faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
     {
-      runtime: 'tfjs',
+      runtime: 'mediapipe',
+      solutionPath: '/face_mesh',
       refineLandmarks: true,
       maxFaces: 1,
-    } as faceLandmarksDetection.MediaPipeFaceMeshTfjsModelConfig
+    } as faceLandmarksDetection.MediaPipeFaceMeshMediaPipeModelConfig
   );
 }
 
