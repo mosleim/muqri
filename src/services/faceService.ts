@@ -1,7 +1,4 @@
 import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection';
-// Side-effect import: prevent Vite from tree-shaking FaceMesh constructor
-// (used internally by face-landmarks-detection with mediapipe runtime)
-import '@mediapipe/face_mesh';
 
 let detector: faceLandmarksDetection.FaceLandmarksDetector | null = null;
 
