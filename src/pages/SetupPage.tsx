@@ -20,14 +20,28 @@ export default function SetupPage() {
 
   // Check microphone permission
   useEffect(() => {
-    if (navigator.permissions) {
-      navigator.permissions.query({ name: 'microphone' as PermissionName }).then((result) => {
-        setMicPermission(result.state as 'prompt' | 'granted' | 'denied');
-        result.onchange = () => setMicPermission(result.state as 'prompt' | 'granted' | 'denied');
-      }).catch(() => {
-        // permissions API might not support microphone query
-      });
-    }
+    const checkMic = async () => {
+      // Try permissions API first (Chrome/Firefox)
+      if (navigator.permissions) {
+        try {
+          const result = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+          setMicPermission(result.state as 'prompt' | 'granted' | 'denied');
+          result.onchange = () => setMicPermission(result.state as 'prompt' | 'granted' | 'denied');
+          return;
+        } catch {
+          // Safari doesn't support querying microphone permission
+        }
+      }
+      // Fallback: try getUserMedia silently to detect existing permission
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((t) => t.stop());
+        setMicPermission('granted');
+      } catch {
+        // Still prompt or denied - keep as 'prompt' so user can click "Izinkan"
+      }
+    };
+    checkMic();
   }, []);
 
   const requestMic = async () => {

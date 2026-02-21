@@ -94,6 +94,7 @@ export function useSpeechRecognition({
   }, [targetText]);
 
   const startRecognition = useCallback(() => {
+    console.log('[Speech] startRecognition called, SpeechRecognition:', !!SpeechRecognition, 'active:', active);
     if (!SpeechRecognition || !active) return;
 
     try {
@@ -104,6 +105,7 @@ export function useSpeechRecognition({
       recognition.maxAlternatives = 1;
 
       recognition.onstart = () => {
+        console.log('[Speech] Recognition started successfully');
         setListening(true);
         setError(null);
       };
@@ -172,6 +174,7 @@ export function useSpeechRecognition({
 
   // Start/stop based on active prop
   useEffect(() => {
+    console.log('[Speech] Effect: active=', active, 'supported=', supported);
     if (active && supported) {
       startRecognition();
     }
