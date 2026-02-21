@@ -17,20 +17,12 @@ Thumbs.db
 *.swp
 *.swo
 
-# Backend
-backend/tmp/
-backend/bin/
-backend/coverage.out
-backend/coverage.html
-backend/telequran-backend
+# Backend (removed)
 
 # Frontend
-frontend/node_modules/
-frontend/build/
-frontend/.react-router/
-frontend/coverage/
-frontend/package-lock.json
+node_modules/
 dist/
+coverage/
 
 # E2E
 e2e/node_modules/
@@ -49,3 +41,4 @@ PROD_FRONTEND_ENV_FILE
 
 tmp
 .vscode/settings.json
+node_modules

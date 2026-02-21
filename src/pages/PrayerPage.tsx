@@ -47,10 +47,10 @@ export default function PrayerPage() {
   // Keyboard shortcuts
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight' || e.key === ' ') {
+      if (e.key === 'ArrowLeft' || e.key === ' ') {
         e.preventDefault();
         nextAyah();
-      } else if (e.key === 'ArrowLeft') {
+      } else if (e.key === 'ArrowRight') {
         e.preventDefault();
         prevAyah();
       } else if (e.key === 'Escape') {

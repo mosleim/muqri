@@ -16,18 +16,18 @@ export function PrompterHeader({ surahName, latinName, onPrev, onNext, onExit }:
         </div>
         <div className="flex items-center gap-1">
           <button
-            onClick={onPrev}
-            className="p-2 rounded-lg hover:bg-surface-200 text-neutral-400 hover:text-white transition-colors text-sm"
-            title="Ayat sebelumnya"
-          >
-            &#9664;
-          </button>
-          <button
             onClick={onNext}
             className="p-2 rounded-lg hover:bg-surface-200 text-neutral-400 hover:text-white transition-colors text-sm"
             title="Ayat selanjutnya"
           >
             &#9654;
+          </button>
+          <button
+            onClick={onPrev}
+            className="p-2 rounded-lg hover:bg-surface-200 text-neutral-400 hover:text-white transition-colors text-sm"
+            title="Ayat sebelumnya"
+          >
+            &#9664;
           </button>
           <button
             onClick={onExit}
