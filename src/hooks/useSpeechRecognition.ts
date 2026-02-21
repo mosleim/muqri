@@ -134,7 +134,11 @@ export function useSpeechRecognition({
       };
 
       recognition.onend = () => {
-        setListening(false);
+        // Don't set listening=false during auto-restart to avoid flicker
+        // Only stop listening if we're truly done (not active anymore)
+        if (!active || matchedRef.current) {
+          setListening(false);
+        }
         // Auto-restart if still active (Web Speech API times out)
         if (active && !matchedRef.current) {
           restartTimerRef.current = setTimeout(() => {
