@@ -1,20 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCamera } from '@/hooks/useCamera';
-import { usePoseDetection } from '@/hooks/usePoseDetection';
-import { useBlinkDetection } from '@/hooks/useBlinkDetection';
 import { useAppStore } from '@/stores/appStore';
 import { usePrayerStore } from '@/stores/prayerStore';
-import { CameraPreview } from '@/components/setup/CameraPreview';
-import { ReadinessCheck } from '@/components/setup/ReadinessCheck';
 
 export default function SetupPage() {
   const navigate = useNavigate();
   const { selectedSurah } = usePrayerStore();
-  const { videoRef, ready, error, start } = useCamera();
-  const { poseModelStatus, faceModelStatus, calibrated, setCameraReady, fontSize, setFontSize } = useAppStore();
+  const { fontSize, setFontSize } = useAppStore();
 
   const [startAyah, setStartAyah] = useState(1);
+  const [micPermission, setMicPermission] = useState<'prompt' | 'granted' | 'denied'>('prompt');
 
   // Redirect if no surah selected
   useEffect(() => {
@@ -23,18 +18,27 @@ export default function SetupPage() {
     }
   }, [selectedSurah, navigate]);
 
-  // Start camera on mount
+  // Check microphone permission
   useEffect(() => {
-    start();
-  }, [start]);
+    if (navigator.permissions) {
+      navigator.permissions.query({ name: 'microphone' as PermissionName }).then((result) => {
+        setMicPermission(result.state as 'prompt' | 'granted' | 'denied');
+        result.onchange = () => setMicPermission(result.state as 'prompt' | 'granted' | 'denied');
+      }).catch(() => {
+        // permissions API might not support microphone query
+      });
+    }
+  }, []);
 
-  useEffect(() => {
-    setCameraReady(ready);
-  }, [ready, setCameraReady]);
-
-  // Init detection models
-  usePoseDetection(videoRef, ready);
-  const { startCalibration, calibrating } = useBlinkDetection(videoRef, ready);
+  const requestMic = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((t) => t.stop());
+      setMicPermission('granted');
+    } catch {
+      setMicPermission('denied');
+    }
+  };
 
   const handleStart = () => {
     usePrayerStore.getState().setCurrentAyahIndex(startAyah - 1);
@@ -43,6 +47,12 @@ export default function SetupPage() {
   };
 
   if (!selectedSurah) return null;
+
+  // Check Web Speech API support
+  const speechSupported = typeof window !== 'undefined' &&
+    ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
+
+  const canStart = speechSupported && micPermission !== 'denied';
 
   return (
     <div className="min-h-screen bg-surface flex flex-col items-center justify-center px-4 py-8">
@@ -54,14 +64,6 @@ export default function SetupPage() {
             {selectedSurah.latinName} &middot; {selectedSurah.ayahCount} ayat
           </p>
         </div>
-
-        {/* Camera */}
-        <CameraPreview videoRef={videoRef} />
-        {error && (
-          <p className="text-red-400 text-sm text-center font-sans">
-            Kamera error: {error}
-          </p>
-        )}
 
         {/* Settings */}
         <div className="space-y-3 bg-surface-100 rounded-xl p-4">
@@ -102,16 +104,55 @@ export default function SetupPage() {
           </p>
         </div>
 
-        {/* Readiness */}
-        <ReadinessCheck
-          cameraReady={ready}
-          poseModel={poseModelStatus}
-          faceModel={faceModelStatus}
-          calibrated={calibrated}
-          calibrating={calibrating}
-          onStartCalibration={startCalibration}
-          onStart={handleStart}
-        />
+        {/* Microphone & Speech API status */}
+        <div className="space-y-2 bg-surface-100 rounded-xl p-4">
+          <h3 className="text-sm font-medium text-white font-sans">Status</h3>
+
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${speechSupported ? 'bg-green-500' : 'bg-red-500'}`} />
+            <span className="text-sm text-neutral-400 font-sans">
+              {speechSupported ? 'Speech API tersedia' : 'Speech API tidak didukung di browser ini'}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${
+              micPermission === 'granted' ? 'bg-green-500' :
+              micPermission === 'denied' ? 'bg-red-500' : 'bg-yellow-500'
+            }`} />
+            <span className="text-sm text-neutral-400 font-sans">
+              {micPermission === 'granted' ? 'Mikrofon diizinkan' :
+               micPermission === 'denied' ? 'Mikrofon ditolak' : 'Mikrofon belum diizinkan'}
+            </span>
+            {micPermission === 'prompt' && (
+              <button
+                onClick={requestMic}
+                className="ml-auto text-xs text-primary-400 hover:text-primary-300 font-sans"
+              >
+                Izinkan
+              </button>
+            )}
+          </div>
+
+          {micPermission === 'denied' && (
+            <p className="text-xs text-red-400/80 font-sans mt-1">
+              Buka pengaturan browser untuk mengizinkan akses mikrofon.
+            </p>
+          )}
+        </div>
+
+        {/* Start button */}
+        <button
+          onClick={handleStart}
+          disabled={!canStart}
+          className={`w-full py-3 rounded-xl font-sans font-medium text-sm transition-colors ${
+            canStart
+              ? 'bg-primary-500 text-white hover:bg-primary-600'
+              : 'bg-surface-200 text-neutral-600 cursor-not-allowed'
+          }`}
+        >
+          Mulai
+        </button>
 
         <button
           onClick={() => navigate('/')}

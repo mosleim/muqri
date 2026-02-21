@@ -1,15 +1,10 @@
-import { useEffect, useCallback, useState, useRef } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCamera } from '@/hooks/useCamera';
-import { usePoseDetection } from '@/hooks/usePoseDetection';
-import { useBlinkDetection } from '@/hooks/useBlinkDetection';
 import { usePrayerStore } from '@/stores/prayerStore';
 import { useAppStore } from '@/stores/appStore';
+import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { AyatDisplay } from '@/components/prayer/AyatDisplay';
 import { PrompterHeader } from '@/components/prayer/PrompterHeader';
-import { StatusBar } from '@/components/prayer/StatusBar';
-import { BlankOverlay } from '@/components/prayer/BlankOverlay';
-import { CameraMini } from '@/components/prayer/CameraMini';
 import { Toast } from '@/components/ui/Toast';
 
 export default function PrayerPage() {
@@ -18,24 +13,13 @@ export default function PrayerPage() {
     selectedSurah,
     mode,
     currentAyahIndex,
-    currentPose,
-    isSendekap,
-    blinkFeedback,
     nextAyah,
     prevAyah,
     reset,
+    setMode,
   } = usePrayerStore();
-  const { videoRef, ready, start } = useCamera();
   const { fontSize } = useAppStore();
-
-  // Start camera
-  useEffect(() => {
-    start();
-  }, [start]);
-
-  // Init detections
-  usePoseDetection(videoRef, ready && mode === 'detecting');
-  useBlinkDetection(videoRef, ready && mode === 'detecting');
+  const [showAdvanceToast, setShowAdvanceToast] = useState(false);
 
   // Redirect if no surah
   useEffect(() => {
@@ -43,6 +27,28 @@ export default function PrayerPage() {
       navigate('/');
     }
   }, [selectedSurah, navigate]);
+
+  // Start detecting mode
+  useEffect(() => {
+    if (selectedSurah && mode !== 'detecting' && mode !== 'done') {
+      setMode('detecting');
+    }
+  }, [selectedSurah, mode, setMode]);
+
+  const currentAyah = selectedSurah?.ayahs[currentAyahIndex];
+
+  const handleMatch = useCallback(() => {
+    setShowAdvanceToast(true);
+    setTimeout(() => setShowAdvanceToast(false), 500);
+    nextAyah();
+  }, [nextAyah]);
+
+  // Speech recognition
+  const { supported, listening, transcript, similarity, error } = useSpeechRecognition({
+    targetText: currentAyah?.text ?? '',
+    onMatch: handleMatch,
+    active: mode === 'detecting' && !!currentAyah,
+  });
 
   // Keyboard shortcuts
   const handleKeyDown = useCallback(
@@ -79,50 +85,8 @@ export default function PrayerPage() {
 
   if (!selectedSurah) return null;
 
-  // Debounce blank mode — wait 2.5s before hiding text when pose leaves qiyam
-  const [debouncedBlank, setDebouncedBlank] = useState(false);
-  const blankTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const rawBlank = currentPose !== 'qiyam' && currentPose !== 'unknown';
-
-  useEffect(() => {
-    if (rawBlank) {
-      blankTimerRef.current = setTimeout(() => setDebouncedBlank(true), 2500);
-    } else {
-      if (blankTimerRef.current) clearTimeout(blankTimerRef.current);
-      setDebouncedBlank(false);
-    }
-    return () => {
-      if (blankTimerRef.current) clearTimeout(blankTimerRef.current);
-    };
-  }, [rawBlank]);
-
-  // Debounce sendekap→not-sendekap to prevent flicker from detection noise
-  const [debouncedSendekap, setDebouncedSendekap] = useState(false);
-  const sendekapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (isSendekap) {
-      // Immediately show text when sendekap detected
-      if (sendekapTimerRef.current) clearTimeout(sendekapTimerRef.current);
-      setDebouncedSendekap(true);
-    } else {
-      // Delay before dimming text when leaving sendekap
-      sendekapTimerRef.current = setTimeout(() => setDebouncedSendekap(false), 2000);
-    }
-    return () => {
-      if (sendekapTimerRef.current) clearTimeout(sendekapTimerRef.current);
-    };
-  }, [isSendekap]);
-
-  const isBlankMode = debouncedBlank;
-  const isDimmed = currentPose === 'qiyam' && !debouncedSendekap;
-
   return (
-    <div
-      className={`min-h-screen bg-surface relative ${
-        blinkFeedback ? 'animate-blink-feedback' : ''
-      }`}
-    >
+    <div className="min-h-screen bg-surface relative">
       <PrompterHeader
         surahName={selectedSurah.name}
         latinName={selectedSurah.latinName}
@@ -134,8 +98,6 @@ export default function PrayerPage() {
         }}
       />
 
-      <BlankOverlay visible={isBlankMode} />
-
       {mode === 'done' ? (
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center animate-fade-in">
@@ -145,27 +107,64 @@ export default function PrayerPage() {
           </div>
         </div>
       ) : (
-        <main className="pt-14 pb-14">
+        <main className="pt-14 pb-20">
           <AyatDisplay
             ayahs={selectedSurah.ayahs}
             currentIndex={currentAyahIndex}
-            dimmed={isDimmed}
+            dimmed={false}
             fontSize={fontSize}
           />
         </main>
       )}
 
-      <StatusBar
-        pose={currentPose}
-        currentAyah={currentAyahIndex}
-        totalAyahs={selectedSurah.ayahs.length}
-        blinkActive={blinkFeedback}
-        sendekap={isSendekap}
-      />
+      {/* Speech recognition status bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-surface-100/95 backdrop-blur-sm border-t border-surface-300/20 px-4 py-2">
+        <div className="max-w-2xl mx-auto flex items-center justify-between text-xs font-sans">
+          {/* Mic status */}
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${listening ? 'bg-green-500 animate-pulse' : error ? 'bg-red-500' : 'bg-neutral-500'}`} />
+            <span className="text-neutral-400">
+              {!supported
+                ? 'Speech API tidak didukung'
+                : error
+                  ? `Error: ${error}`
+                  : listening
+                    ? 'Mendengarkan...'
+                    : 'Memulai...'}
+            </span>
+          </div>
 
-      <CameraMini videoRef={videoRef} visible={ready} />
+          {/* Similarity bar */}
+          <div className="flex items-center gap-2 flex-1 mx-4 max-w-xs">
+            <div className="flex-1 h-1.5 bg-surface-300/30 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-300"
+                style={{
+                  width: `${Math.round(similarity * 100)}%`,
+                  backgroundColor: similarity >= 0.45 ? '#22c55e' : similarity >= 0.25 ? '#eab308' : '#6b7280',
+                }}
+              />
+            </div>
+            <span className="text-neutral-500 tabular-nums w-8">{Math.round(similarity * 100)}%</span>
+          </div>
 
-      <Toast message="Ayat berikutnya" visible={blinkFeedback} />
+          {/* Ayah counter */}
+          <span className="text-neutral-500 tabular-nums">
+            {currentAyahIndex + 1}/{selectedSurah.ayahs.length}
+          </span>
+        </div>
+
+        {/* Transcript preview */}
+        {transcript && (
+          <div className="max-w-2xl mx-auto mt-1">
+            <p className="text-neutral-500 text-xs font-arabic text-right truncate" dir="rtl">
+              {transcript}
+            </p>
+          </div>
+        )}
+      </div>
+
+      <Toast message="Ayat berikutnya" visible={showAdvanceToast} />
     </div>
   );
 }
