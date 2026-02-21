@@ -52,7 +52,7 @@ export default function SetupPage() {
   const speechSupported = typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
-  const canStart = speechSupported && micPermission !== 'denied';
+  const canStart = speechSupported && micPermission === 'granted';
 
   return (
     <div className="min-h-screen bg-surface flex flex-col items-center justify-center px-4 py-8">

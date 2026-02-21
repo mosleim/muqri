@@ -126,12 +126,28 @@ export default function PrayerPage() {
             <span className="text-neutral-400">
               {!supported
                 ? 'Speech API tidak didukung'
-                : error
-                  ? `Error: ${error}`
-                  : listening
-                    ? 'Mendengarkan...'
-                    : 'Memulai...'}
+                : error === 'not-allowed'
+                  ? 'Mikrofon tidak diizinkan'
+                  : error
+                    ? `Error: ${error}`
+                    : listening
+                      ? 'Mendengarkan...'
+                      : 'Memulai...'}
             </span>
+            {error === 'not-allowed' && (
+              <button
+                onClick={async () => {
+                  try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    stream.getTracks().forEach((t) => t.stop());
+                    window.location.reload();
+                  } catch { /* denied */ }
+                }}
+                className="text-primary-400 hover:text-primary-300"
+              >
+                Izinkan
+              </button>
+            )}
           </div>
 
           {/* Similarity bar */}

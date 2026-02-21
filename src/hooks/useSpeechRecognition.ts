@@ -76,6 +76,7 @@ export function useSpeechRecognition({
   const [similarity, setSimilarity] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const matchedRef = useRef(false);
+  const fatalErrorRef = useRef(false);
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const SpeechRecognition = typeof window !== 'undefined'
@@ -89,6 +90,7 @@ export function useSpeechRecognition({
     setTranscript('');
     setSimilarity(0);
     matchedRef.current = false;
+    fatalErrorRef.current = false;
   }, [targetText]);
 
   const startRecognition = useCallback(() => {
@@ -140,16 +142,20 @@ export function useSpeechRecognition({
         console.warn('[Speech] Error:', event.error);
         setError(event.error);
         setListening(false);
+        // Don't auto-restart on permission or fatal errors
+        if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+          fatalErrorRef.current = true;
+        }
       };
 
       recognition.onend = () => {
         // Don't set listening=false during auto-restart to avoid flicker
         // Only stop listening if we're truly done (not active anymore)
-        if (!active || matchedRef.current) {
+        if (!active || matchedRef.current || fatalErrorRef.current) {
           setListening(false);
         }
         // Auto-restart if still active (Web Speech API times out)
-        if (active && !matchedRef.current) {
+        if (active && !matchedRef.current && !fatalErrorRef.current) {
           restartTimerRef.current = setTimeout(() => {
             startRecognition();
           }, 300);
