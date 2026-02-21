@@ -1,48 +1,48 @@
 # Muqri (مُقرئ)
 
-**Teleprompter Al-Quran untuk Imam Shalat**
+**Al-Quran Teleprompter for Prayer Leaders (Imam)**
 
-Muqri adalah aplikasi web PWA yang menampilkan ayat Al-Quran secara real-time saat imam memimpin shalat. Menggunakan kamera perangkat untuk mendeteksi gerakan shalat dan kedipan mata sebagai navigasi antar ayat — tanpa perlu menyentuh layar.
+Muqri is a PWA web app that displays Quran verses in real-time while leading prayer. It uses the device camera to detect prayer movements and eye blinks for hands-free verse navigation — no screen touching needed.
 
 **Live:** [muqri.mosleim.com](https://muqri.mosleim.com)
 
 ---
 
-## Fitur Utama
+## Key Features
 
-- **Deteksi Gerakan Shalat** — Mengenali posisi qiyam, ruku, sujud, dan duduk menggunakan MoveNet (TensorFlow.js)
-- **Navigasi Kedipan Mata** — Kedip mata disengaja (>250ms) untuk berpindah ke ayat berikutnya, menggunakan MediaPipe FaceMesh
-- **Mode Sendekap** — Otomatis menampilkan/menyembunyikan ayat berdasarkan posisi tangan bersedekap
-- **Offline-First (PWA)** — Berjalan sepenuhnya offline setelah loading pertama
-- **Pilih Surah & Ayat** — Mulai dari surah dan ayat manapun
-- **Ukuran Font** — Atur ukuran teks Arab sesuai jarak pandang
-- **Auto-Advance Surah** — Otomatis lanjut ke surah berikutnya
+- **Prayer Movement Detection** — Recognizes qiyam (standing), ruku (bowing), sujud (prostration), and sitting positions using MoveNet (TensorFlow.js)
+- **Eye Blink Navigation** — Intentional eye blinks (>250ms) advance to the next verse, powered by MediaPipe FaceMesh
+- **Sendekap Mode** — Automatically shows/hides verses based on folded arms position
+- **Offline-First (PWA)** — Fully functional offline after initial load
+- **Surah & Verse Selection** — Start from any surah and verse number
+- **Font Size Control** — Adjust Arabic text size for comfortable reading distance
+- **Auto-Advance Surah** — Automatically continues to the next surah
 
 ---
 
 ## Tech Stack
 
-| Teknologi | Kegunaan |
-|-----------|----------|
+| Technology | Purpose |
+|------------|---------|
 | React 18 + TypeScript | Frontend SPA |
 | Vite 5 | Build tool |
 | Tailwind CSS 3 | Styling (dark theme) |
 | Zustand | State management |
-| TensorFlow.js (MoveNet) | Deteksi pose tubuh |
-| MediaPipe FaceMesh | Deteksi kedipan mata |
-| IndexedDB (idb) | Cache data offline |
-| VitePWA (Workbox) | Service worker & offline |
+| TensorFlow.js (MoveNet) | Body pose detection |
+| MediaPipe FaceMesh | Eye blink detection |
+| IndexedDB (idb) | Offline data cache |
+| VitePWA (Workbox) | Service worker & offline support |
 
 ---
 
 ## Getting Started
 
-### Prasyarat
+### Prerequisites
 
 - Node.js 18+
 - pnpm
 
-### Instalasi
+### Installation
 
 ```bash
 git clone https://github.com/mosleim/muqri.git
@@ -56,7 +56,7 @@ pnpm install
 pnpm dev
 ```
 
-Buka `http://localhost:5173` di browser. Pastikan menggunakan browser yang mendukung WebRTC (Chrome/Edge disarankan).
+Open `http://localhost:5173` in your browser. Use a browser with WebRTC support (Chrome/Edge recommended).
 
 ### Build
 
@@ -64,32 +64,32 @@ Buka `http://localhost:5173` di browser. Pastikan menggunakan browser yang mendu
 pnpm build
 ```
 
-Hasil build di folder `dist/`, siap deploy sebagai static site.
+Output goes to the `dist/` folder, ready for static site deployment.
 
 ---
 
-## Cara Penggunaan
+## How to Use
 
-1. **Pilih Surah** — Di halaman utama, pilih surah yang akan dibaca
-2. **Setup** — Izinkan akses kamera, tunggu model AI dimuat, lalu kalibrasi mata
-3. **Mulai Shalat** — Teks ayat tampil otomatis saat berdiri (qiyam) dan bersedekap
-4. **Navigasi** — Kedipkan mata (>250ms) untuk lanjut ke ayat berikutnya
-5. **Otomatis** — Teks menghilang saat ruku/sujud, muncul kembali saat berdiri
+1. **Select Surah** — Choose a surah from the home page
+2. **Setup** — Allow camera access, wait for AI models to load, then calibrate eye tracking
+3. **Start Praying** — Verse text appears automatically when standing (qiyam) with folded arms
+4. **Navigate** — Blink intentionally (>250ms) to advance to the next verse
+5. **Automatic** — Text hides during ruku/sujud and reappears when standing
 
-### Keyboard Shortcut
+### Keyboard Shortcuts
 
-| Tombol | Aksi |
-|--------|------|
-| `←` (kiri) | Ayat selanjutnya (RTL) |
-| `→` (kanan) | Ayat sebelumnya (RTL) |
-| `Space` | Ayat selanjutnya |
-| `Esc` | Keluar |
+| Key | Action |
+|-----|--------|
+| `←` (Left) | Next verse (RTL) |
+| `→` (Right) | Previous verse (RTL) |
+| `Space` | Next verse |
+| `Esc` | Exit |
 
 ---
 
-## Sumber Data
+## Data Source
 
-Al-Quran data dari [quran-json](https://www.npmjs.com/package/quran-json) via CDN:
+Quran data from [quran-json](https://www.npmjs.com/package/quran-json) via CDN:
 
 ```
 https://cdn.jsdelivr.net/npm/quran-json@3.1.2/dist/quran.json
@@ -99,16 +99,16 @@ https://cdn.jsdelivr.net/npm/quran-json@3.1.2/dist/quran.json
 
 ## Deployment
 
-Aplikasi ini di-deploy sebagai static site di Cloudflare Pages. Bisa juga di-deploy di platform lain yang mendukung static hosting (Netlify, Vercel, GitHub Pages, dll).
+Deployed as a static site on Cloudflare Pages. Can also be deployed on any static hosting platform (Netlify, Vercel, GitHub Pages, etc.).
 
 ---
 
-## Kontak
+## Contact
 
 **Email:** mosleim@gmail.com
 
 ---
 
-## Lisensi
+## License
 
 MIT
