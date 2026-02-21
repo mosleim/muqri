@@ -8,7 +8,7 @@ export async function loadFaceModel(): Promise<void> {
     faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
     {
       runtime: 'mediapipe',
-      solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh',
+      solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619',
       refineLandmarks: true,
       maxFaces: 1,
     } as faceLandmarksDetection.MediaPipeFaceMeshMediaPipeModelConfig
